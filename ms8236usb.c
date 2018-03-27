@@ -140,15 +140,20 @@ void decode_msg(unsigned char *raw_msg)
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
     char *portname = "/dev/ttyUSB0";
     int fd;
+    int n = -1;
     // int wlen;
 
-    printf("Data Logging interface for PeakMeter MS8236 USB Multimeter.\n");
-    printf("If logging does not start make sure USB lead is connected,\n");
-    printf("then press and hold USB button on meter for two seconds.\n");
+    if (argc ==1) {
+	printf("Data Logging interface for PeakMeter MS8236 USB Multimeter.\n");
+	printf("If logging does not start make sure USB lead is connected,\n");
+	printf("then press and hold USB button on meter for two seconds.\n");
+    } else {
+        n = atoi(argv[1]);
+    }  
     fd = open(portname, O_RDWR | O_NOCTTY | O_SYNC);
     if (fd < 0) {
         printf("Error opening %s: %s\n", portname, strerror(errno));
@@ -169,6 +174,7 @@ int main()
     /* simple noncanonical input */
     int msg_index=0;
     unsigned char raw_msg[80];
+    int count = 0;
     do {
         unsigned char buf[80];
         int rdlen;
@@ -194,6 +200,10 @@ int main()
                 if (msg_index == 22 ) 
                 {
                     decode_msg(raw_msg);
+		    count = count + 1;
+		    if (n > 0 && count >= n) {
+		      exit(0);
+		    }
                     msg_index = 0;
                 }
                 //printf("msg_index=%d\n",msg_index);
@@ -203,5 +213,5 @@ int main()
             printf("Error from read: %d: %s\n", rdlen, strerror(errno));
         }
         /* repeat read to get full message */
-    } while (1);
+	} while (1);
 }
